@@ -16,7 +16,10 @@ const keepAliveAgent = new https.Agent({
  */
 export class BypassedClaudeClient {
   constructor(options = {}) {
-    this.apiKey = options.apiKey || process.env.FREEMODEL_API_KEY ;
+    this.apiKey = (options.apiKey?.toString().trim() || process.env.FREEMODEL_API_KEY?.toString().trim()) || null;
+    if (!this.apiKey) {
+      throw new Error('Missing API key. Set FREEMODEL_API_KEY or pass `freemodelapi` in the request body.');
+    }
     this.model = options.model || "claude-opus-4-7";
     this.maxTokens = options.maxTokens || 8192;
     this.temperature = options.temperature;
@@ -113,6 +116,10 @@ export class BypassedClaudeClient {
       requestBody.temperature = temperature;
     }
 
+    if (!this.apiKey) {
+      throw new Error('API key missing: cannot create request without a valid FREEMODEL_API_KEY or freemodelapi value.');
+    }
+
     const bodyStr = JSON.stringify(requestBody);
 
     const headers = {
@@ -152,7 +159,14 @@ export class BypassedClaudeClient {
         agent: keepAliveAgent
       }, (res) => {
         if (res.statusCode !== 200) {
-          reject(new Error(`Upstream returned status ${res.statusCode}`));
+          let errorBody = '';
+          res.on('data', (chunk) => {
+            errorBody += chunk.toString('utf8');
+          });
+          res.on('end', () => {
+            const cleaned = errorBody.trim();
+            reject(new Error(`Upstream returned status ${res.statusCode}: ${cleaned || res.statusMessage}`));
+          });
           return;
         }
 

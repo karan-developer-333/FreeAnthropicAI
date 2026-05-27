@@ -40,9 +40,17 @@ app.post('/api/chat', async (req, res) => {
 
     console.log(`[Merged Server] POST /api/chat -> Model: ${model}, Streaming: ${streaming}, Thinking: ${thinking}`);
 
+    const apiKey = (freemodelapi || process.env.FREEMODEL_API_KEY || '').toString().trim();
+    if (!apiKey) {
+      res.status(400).json({
+        error: 'Missing API key. Provide `freemodelapi` in the request body or set FREEMODEL_API_KEY in the environment.'
+      });
+      return;
+    }
+
     // Initialize our bypassed client using the custom API key passed in body if present
     const client = new BypassedClaudeClient({
-      apiKey: freemodelapi
+      apiKey
     });
 
     if (streaming) {
