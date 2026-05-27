@@ -21,7 +21,7 @@ export class BypassedClaudeClient {
       throw new Error('Missing API key. Set FREEMODEL_API_KEY or pass `freemodelapi` in the request body.');
     }
     this.model = options.model || "claude-opus-4-7";
-    this.maxTokens = options.maxTokens || 8192;
+    this.maxTokens = options.maxTokens || 16000;
     this.temperature = options.temperature;
   }
 
@@ -37,6 +37,7 @@ export class BypassedClaudeClient {
       temperature = this.temperature,
       stream: clientStream = false,
       thinking,
+      tools,
       onToken
     } = params;
 
@@ -95,6 +96,9 @@ export class BypassedClaudeClient {
         })
       }
     };
+    if (tools && tools.length) {
+      requestBody.tools = tools;
+    }
 
     const isSonnet = targetModel === 'claude-sonnet-4-6' || targetModel === 'claude-3-7-sonnet-20250219';
     if (isSonnet) {

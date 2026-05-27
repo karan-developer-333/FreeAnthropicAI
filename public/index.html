@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Claude CLI Playground</title>
+  <title>Claude.ai</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -86,6 +86,7 @@
     }
 
     /* ── Base ── */
+    html { transition: background 0.35s ease; }
     html, body {
       height: 100%;
       overflow: hidden;
@@ -97,12 +98,13 @@
       color: var(--text);
       background: var(--bg);
       -webkit-font-smoothing: antialiased;
+      transition: background 0.35s ease, color 0.35s ease;
     }
 
     /* ── Scrollbars ── */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: var(--radius-sm); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
 
     /* ── Layout Shell ── */
@@ -123,7 +125,7 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      transition: transform var(--transition), width var(--transition);
+      transition: transform var(--transition), width var(--transition), background 0.35s ease, border-color 0.35s ease;
       z-index: 20;
     }
     .sidebar.collapsed {
@@ -147,6 +149,7 @@
       gap: 8px;
       padding-bottom: 12px;
       border-bottom: 1px solid var(--border-soft);
+      transition: border-color 0.35s ease;
     }
     .brand-mark {
       width: 26px;
@@ -200,7 +203,7 @@
       font-size: 12.5px;
       color: var(--text);
       outline: none;
-      transition: border-color var(--transition);
+      transition: border-color var(--transition), background 0.35s ease, color 0.35s ease;
       appearance: none;
     }
     input[type="password"]:focus,
@@ -248,6 +251,7 @@
       border: 1px solid var(--border-soft);
       border-radius: var(--radius-sm);
       margin-bottom: 5px;
+      transition: background 0.35s ease, border-color 0.35s ease;
     }
     .toggle-row:last-child { margin-bottom: 0; }
     .toggle-info { display: flex; flex-direction: column; }
@@ -261,7 +265,7 @@
       background: var(--border);
       border-radius: 20px;
       cursor: pointer;
-      transition: background var(--transition);
+      transition: background 0.25s ease;
     }
     .sw-track::before {
       content: '';
@@ -292,11 +296,13 @@
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
-      transition: all var(--transition);
+      transition: all 0.2s ease;
     }
     .code-btn:hover {
       background: var(--accent);
       color: #fff;
+      box-shadow: 0 0 14px var(--accent-glow);
+      transform: translateY(-0.5px);
     }
     .code-btn svg { width: 12px; height: 12px; stroke: currentColor; fill: none; }
 
@@ -308,6 +314,8 @@
       flex-direction: column;
       overflow: hidden;
       background: var(--bg);
+      background-image: radial-gradient(ellipse at 50% 0%, var(--accent-glow) 0%, transparent 60%);
+      transition: background 0.35s ease;
     }
 
     /* ── Top Bar ── */
@@ -321,6 +329,7 @@
       background: var(--bg-panel);
       border-bottom: 1px solid var(--border);
       gap: 8px;
+      transition: background 0.35s ease, border-color 0.35s ease;
     }
     .top-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
     .top-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
@@ -346,17 +355,22 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-    }
-    .status-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: #22c55e;
-      box-shadow: 0 0 5px #22c55e;
-      flex-shrink: 0;
-      animation: glow 2s infinite ease-in-out;
+      transition: color 0.35s ease;
     }
     @keyframes glow {
       0%,100% { opacity: 0.6; } 50% { opacity: 1; }
+    }
+    @keyframes pulse-ring {
+      0%,100% { box-shadow: 0 0 0 0 var(--accent-glow); }
+      50% { box-shadow: 0 0 12px 3px var(--accent-glow); }
+    }
+    @keyframes float {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
     /* ── Theme Button ── */
@@ -383,6 +397,7 @@
       flex-direction: column;
       gap: 12px;
       scroll-behavior: smooth;
+      transition: background 0.35s ease;
     }
 
     /* ── Welcome Container ── */
@@ -398,12 +413,13 @@
       pointer-events: none;
     }
     .welcome-icon {
-      width: 44px; height: 44px;
+      width: 48px; height: 48px;
       border-radius: var(--radius-md);
       background: var(--accent-bg);
       border: 1px solid var(--accent);
       display: flex; align-items: center; justify-content: center;
-      margin-bottom: 2px;
+      margin-bottom: 6px;
+      animation: float 3s ease-in-out infinite, pulse-ring 3s ease-in-out infinite;
     }
     .welcome-icon svg { width: 22px; height: 22px; stroke: var(--accent); fill: none; }
     .welcome h2 { font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
@@ -417,8 +433,8 @@
       animation: msgIn 0.18s ease forwards;
     }
     @keyframes msgIn {
-      from { opacity: 0; transform: translateY(4px); }
-      to   { opacity: 1; transform: translateY(0); }
+      from { opacity: 0; transform: translateY(8px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
     }
     .msg-wrap.user { align-self: flex-end; align-items: flex-end; }
     .msg-wrap.assistant { align-self: flex-start; align-items: flex-start; }
@@ -463,6 +479,11 @@
       max-width: 580px;
       overflow: hidden;
       box-shadow: var(--shadow-sm);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .pasted-batch-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent-glow);
     }
     .pasted-batch-header {
       display: flex;
@@ -497,8 +518,9 @@
       border: none;
       cursor: pointer;
       font-weight: 600;
+      transition: opacity 0.15s ease;
     }
-    .pasted-batch-toggle:hover { text-decoration: underline; }
+    .pasted-batch-toggle:hover { opacity: 0.7; text-decoration: underline; }
     .pasted-batch-body {
       padding: 8px;
       max-height: 140px;
@@ -533,6 +555,7 @@
       overflow-x: auto;
       max-height: 120px;
       overflow-y: auto;
+      transition: background 0.35s ease, border-color 0.35s ease;
     }
     .thinking-label {
       font-size: 9px;
@@ -546,10 +569,10 @@
     /* ── Typing Animation ── */
     .typing { display: flex; gap: 3px; align-items: center; padding: 3px 1px; }
     .typing span {
-      width: 4px; height: 4px;
-      background: var(--text-3);
+      width: 5px; height: 5px;
+      background: var(--accent);
       border-radius: 50%;
-      animation: bounce 1.2s infinite ease-in-out;
+      animation: bounce 1.4s infinite ease-in-out;
     }
     .typing span:nth-child(1) { animation-delay: 0s; }
     .typing span:nth-child(2) { animation-delay: 0.15s; }
@@ -557,6 +580,42 @@
     @keyframes bounce {
       0%,80%,100% { transform: scaleY(0.6); opacity: 0.4; }
       40% { transform: scaleY(1); opacity: 1; }
+    }
+
+    /* ── Status Line (Searching / Thinking indicator) ── */
+    .status-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-3);
+      font-weight: 500;
+      padding: 2px 0;
+    }
+    .status-dot-pulse {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse-dot 1.2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%,100% { opacity: 0.3; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    /* ── Shimmer Text Effect ── */
+    .shimmer {
+      display: inline;
+      background: linear-gradient(90deg, var(--text) 0%, var(--accent) 50%, var(--text) 100%);
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer-slide 2s ease-in-out infinite;
+    }
+    @keyframes shimmer-slide {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
     }
 
     /* ── Standard Code blocks from streaming text ── */
@@ -587,6 +646,7 @@
       padding: 8px 12px;
       background: var(--bg-panel);
       border-top: 1px solid var(--border);
+      transition: background 0.35s ease, border-color 0.35s ease;
     }
     .input-bar {
       display: flex;
@@ -599,6 +659,7 @@
     }
     .input-bar:focus-within {
       border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent-glow), 0 2px 8px rgba(0,0,0,0.04);
     }
 
     /* ── Paste Batches (chips above input) ── */
@@ -609,6 +670,7 @@
       margin-bottom: 6px;
       max-height: 160px;
       overflow-y: auto;
+      animation: fade-up 0.2s ease;
     }
     .paste-batch-chip {
       display: flex;
@@ -620,6 +682,7 @@
       border-radius: var(--radius-sm);
       font-size: 11.5px;
       color: var(--text);
+      animation: fade-up 0.2s ease forwards;
     }
     .paste-batch-tag {
       flex-shrink: 0;
@@ -631,6 +694,7 @@
       border-radius: 3px;
       text-transform: uppercase;
       letter-spacing: 0.3px;
+      box-shadow: 0 0 4px var(--accent-glow);
     }
     .paste-batch-preview {
       flex: 1;
@@ -672,11 +736,12 @@
       max-height: 100px;
       overflow-y: auto;
       padding: 2px 0;
+      transition: height 0.1s ease;
     }
     .chat-input::placeholder { color: var(--text-3); }
     
     .send-btn {
-      width: 26px; height: 26px;
+      width: 28px; height: 28px;
       flex-shrink: 0;
       border-radius: var(--radius-sm);
       background: var(--accent);
@@ -685,10 +750,11 @@
       display: flex; align-items: center; justify-content: center;
       cursor: pointer;
       transition: all var(--transition);
+      position: relative;
     }
-    .send-btn:hover { transform: scale(1.04); }
-    .send-btn:active { transform: scale(0.96); }
-    .send-btn svg { width: 12px; height: 12px; fill: #fff; }
+    .send-btn:hover { transform: scale(1.06); box-shadow: 0 0 12px var(--accent-glow); }
+    .send-btn:active { transform: scale(0.94); }
+    .send-btn svg { width: 13px; height: 13px; fill: #fff; }
 
     /* ── Navigation Draw Overlay (Mobile Layouts) ── */
     .sidebar-overlay {
@@ -703,36 +769,27 @@
 
     /* ── Generator Modal ── */
     .modal-bg {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.4);
-      backdrop-filter: blur(3px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.15s ease;
-      padding: 12px;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.35);
+      backdrop-filter: blur(2px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      z-index: 50;
+      transition: opacity 0.2s ease;
     }
-    .modal-bg.open { opacity: 1; pointer-events: auto; }
-
+    .modal-bg.open { opacity: 1; pointer-events: all; }
     .modal {
-      width: 100%;
-      max-width: 640px;
-      max-height: 85vh;
       background: var(--bg-panel);
       border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow-lg);
-      display: flex;
-      flex-direction: column;
+      border-radius: var(--radius-lg);
+      width: 90%; max-width: 620px;
+      max-height: 80vh;
+      display: flex; flex-direction: column;
       overflow: hidden;
-      transform: translateY(8px);
-      transition: transform 0.15s ease;
+      transform: translateY(12px) scale(0.97);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .modal-bg.open .modal { transform: translateY(0); }
+    .modal-bg.open .modal { transform: translateY(0) scale(1); }
 
     .modal-head {
       display: flex;
@@ -822,6 +879,99 @@
       overflow-y: auto;
     }
 
+    /* ── Code Block Wrapper (in messages) ── */
+    .code-block-wrapper {
+      margin: 6px 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: var(--bg-panel);
+    }
+    .code-block-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 3px 8px;
+      background: var(--bg-input);
+      border-bottom: 1px solid var(--border);
+    }
+    .code-lang-tag {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .preview-btn {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--accent);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 3px;
+      transition: all 0.15s ease;
+    }
+    .preview-btn:hover {
+      background: var(--accent-bg);
+      color: var(--accent-2);
+    }
+    .code-block-wrapper pre {
+      margin: 0;
+      padding: 8px 10px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      line-height: 1.45;
+      color: var(--text);
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* ── Preview Modal ── */
+    .preview-modal {
+      width: 90%; max-width: 860px;
+      max-height: 88vh;
+    }
+    .preview-modal-head {
+      padding: 6px 10px 6px 14px;
+    }
+    .preview-modal-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .preview-refresh-btn {
+      font-size: 14px;
+      width: 24px; height: 24px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-2);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .preview-refresh-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text);
+    }
+    .preview-body {
+      flex: 1;
+      min-height: 400px;
+      background: #fff;
+      position: relative;
+    }
+    #previewFrame {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
     /* ── Responsive Refinements ── */
     @media (max-width: 768px) {
       :root { --sidebar-w: 260px; }
@@ -870,8 +1020,8 @@
           <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.93.55 3.73 1.5 5.25L2 22l4.85-1.45C8.29 21.43 10.09 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"/></svg>
         </div>
         <div>
-          <div class="brand-name">Claude CLI</div>
-          <div class="brand-tag">Playground v2</div>
+          <div class="brand-name">Claude.ai</div>
+          <div class="brand-tag">Free Playground</div>
         </div>
       </div>
 
@@ -925,6 +1075,13 @@
           </div>
           <label class="sw"><input type="checkbox" id="streamingToggle" checked><span class="sw-track"></span></label>
         </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-name">Web Search</span>
+            <span class="toggle-hint">Tavily-powered realtime search</span>
+          </div>
+          <label class="sw"><input type="checkbox" id="webSearchToggle"><span class="sw-track"></span></label>
+        </div>
       </div>
 
       <!-- Code Trigger -->
@@ -947,7 +1104,6 @@
         <button class="icon-btn" id="sidebarToggle" aria-label="Toggle Navigation Panel">
           <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
-        <div class="status-dot"></div>
         <span class="model-badge" id="activeModel">Claude 3.7 Sonnet</span>
       </div>
       <div class="top-right">
@@ -993,11 +1149,9 @@
       <button class="modal-close" id="closeModal">&times;</button>
     </div>
     <div class="modal-tabs" id="modalTabs">
-      <button class="tab active" data-lang="js-fetch">JS Fetch</button>
-      <button class="tab" data-lang="python-req">Python</button>
-      <button class="tab" data-lang="python-lc">Python LangChain</button>
-      <button class="tab" data-lang="js-lc">JS LangChain</button>
-      <button class="tab" data-lang="js-sdk">Bypassed SDK</button>
+      <button class="tab active" data-lang="python">Python</button>
+      <button class="tab" data-lang="javascript">JavaScript</button>
+      <button class="tab" data-lang="agent">Agent SDK</button>
     </div>
     <div class="modal-body">
       <div class="code-box">
@@ -1013,6 +1167,22 @@
   </div>
 </div>
 
+<!-- Live Preview Overlay -->
+<div class="modal-bg" id="previewModal">
+  <div class="modal preview-modal">
+    <div class="modal-head preview-modal-head">
+      <span class="modal-title">Live Preview</span>
+      <div class="preview-modal-actions">
+        <button class="preview-refresh-btn" id="previewRefresh">↻</button>
+        <button class="modal-close" id="closePreview">&times;</button>
+      </div>
+    </div>
+    <div class="preview-body">
+      <iframe id="previewFrame" sandbox="allow-scripts allow-modals" loading="lazy"></iframe>
+    </div>
+  </div>
+</div>
+
 <script>
   // ── Domestic References ──
   const $ = id => document.getElementById(id);
@@ -1022,6 +1192,7 @@
   const tempVal        = $('tempVal');
   const thinkingToggle = $('thinkingToggle');
   const streamingToggle= $('streamingToggle');
+  const webSearchToggle= $('webSearchToggle');
   const activeModel    = $('activeModel');
   const messages       = $('messages');
   const welcome        = $('welcome');
@@ -1039,10 +1210,14 @@
   const modalTabs      = $('modalTabs');
   const codeView       = $('codeView');
   const copyBtn        = $('copyBtn');
+  const previewModal   = $('previewModal');
+  const closePreview   = $('closePreview');
+  const previewFrame   = $('previewFrame');
+  const previewRefresh = $('previewRefresh');
 
   let chatHistory = [];
   let pasteBatches = [];
-  let currentLang = 'js-fetch';
+  let currentLang = 'python';
   const MOBILE_BP = 768;
 
   // ── Theme Management ──
@@ -1164,10 +1339,12 @@
     pasteBatches = [];
     renderPasteBatches();
 
+    const useSearch = webSearchToggle.checked;
+    const endpoint = useSearch ? '/api/chat-with-search' : '/api/chat';
     const payload = {
       model: modelSelect.value,
       messages: chatHistory,
-      streaming: streamingToggle.checked,
+      streaming: useSearch ? false : streamingToggle.checked,
       thinking: thinkingToggle.checked,
       temperature: parseFloat(tempSlider.value)
     };
@@ -1176,8 +1353,17 @@
 
     const msgId = addMsg('assistant', null, true);
 
+    if (useSearch) {
+      setMsg(msgId, '', '', false);
+      const wrap = $(msgId);
+      if (wrap) {
+        const bubble = wrap.querySelector('.msg-bubble');
+        if (bubble) bubble.innerHTML = '<div class="status-line"><span class="status-dot-pulse"></span> Searching the web...</div>';
+      }
+    }
+
     try {
-      const res = await fetch('/api/chat', {
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -1217,8 +1403,11 @@
       } else {
         const data = await res.json();
         if (data.error) throw new Error(data.error);
-        const t = data.content?.[0]?.text || '';
-        setMsg(msgId, t, '', false);
+        const textBlock = data.content?.find(c => c.type === 'text');
+        const thinkBlock = data.content?.find(c => c.type === 'thinking');
+        const t = textBlock?.text || '';
+        const th = thinkBlock?.thinking || '';
+        setMsg(msgId, t, th, false);
         chatHistory.push({ role: 'assistant', content: t });
       }
     } catch (err) {
@@ -1359,21 +1548,103 @@
     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
-  function renderText(str) {
-    let s = esc(str);
-    s = s.replace(/```([\s\S]*?)```/g, (_,c) => `<pre>${c.trim()}</pre>`);
-    s = s.replace(/`([^`\n]+)`/g, (_,c) => `<code>${c}</code>`);
-    s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    s = s.replace(/\n/g, '<br>');
-    return s;
+  function decodeHTML(str) {
+    const t = document.createElement('textarea');
+    t.innerHTML = str;
+    return t.value;
   }
+
+  const PREVIEW_LANGS = ['html','htm','css','js','javascript','markdown','md','svg'];
+
+  function renderText(str) {
+    let html = '', last = 0;
+    const re = /```(\w*)\n?([\s\S]*?)```/g;
+    let m;
+    while ((m = re.exec(str)) !== null) {
+      // text before
+      const before = str.slice(last, m.index);
+      if (before) {
+        let s = esc(before);
+        s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+        s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        s = s.replace(/\n/g, '<br>');
+        html += s;
+      }
+      const lang = m[1].toLowerCase();
+      const code = m[2].trim();
+      const previewable = PREVIEW_LANGS.includes(lang);
+      html += '<div class="code-block-wrapper">';
+      html += '<div class="code-block-head">';
+      html += '<span class="code-lang-tag">' + esc(m[1] || 'code') + '</span>';
+      if (previewable) {
+        html += '<button class="preview-btn" data-lang="' + lang + '">Preview</button>';
+      }
+      html += '</div>';
+      html += '<pre>' + esc(code) + '</pre>';
+      html += '</div>';
+      last = m.index + m[0].length;
+    }
+    // remaining text
+    const after = str.slice(last);
+    if (after) {
+      let s = esc(after);
+      s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+      s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      s = s.replace(/\n/g, '<br>');
+      html += s;
+    }
+    return html;
+  }
+
+  // ── Preview Handler ──
+  function openPreview(code, lang) {
+    let doc = '';
+    if (lang === 'html' || lang === 'htm') {
+      doc = code;
+    } else if (lang === 'css') {
+      doc = '<!DOCTYPE html><html><head><style>' + code + '</style></head><body><div style="font-family:sans-serif;padding:20px;color:#333"><h2 style="margin-top:0">CSS Preview</h2><div id="preview-content" style="border:1px dashed #ddd;padding:16px;border-radius:4px"><p>This is a sample paragraph to preview your styles.</p><button style="padding:6px 14px;border:1px solid #aaa;border-radius:4px;background:#f5f5f5">Sample Button</button></div></div></body></html>';
+    } else if (lang === 'js' || lang === 'javascript') {
+      doc = '<!DOCTYPE html><html><head></head><body><div style="font-family:sans-serif;padding:20px;color:#333"><h2 style="margin-top:0">JS Preview</h2><div id="output" style="background:#f5f5f5;padding:12px;border-radius:4px;margin-top:8px;white-space:pre-wrap;font-family:monospace">Check console or below for output...</div></div><script>' + code.replace(/<\//g, '<\\/') + '<\/script></body></html>';
+    } else if (lang === 'svg') {
+      doc = '<!DOCTYPE html><html><body style="display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#fafafa">' + code + '</body></html>';
+    } else if (lang === 'markdown' || lang === 'md') {
+      let md = esc(code);
+      md = md.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+      md = md.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+      md = md.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+      md = md.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      md = md.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+      md = md.replace(/\n/g, '<br>');
+      doc = '<!DOCTYPE html><html><head><style>body{font-family:-apple-system,sans-serif;padding:24px;max-width:720px;margin:0 auto;line-height:1.6;color:#1a1a1a}h1,h2,h3{font-weight:600;line-height:1.3}code{background:#f0f0f0;padding:1px 5px;border-radius:3px;font-size:0.9em}pre{background:#f5f5f5;padding:12px;border-radius:4px;overflow-x:auto}</style></head><body>' + md + '</body></html>';
+    }
+    previewFrame.srcdoc = doc;
+    previewModal.classList.add('open');
+  }
+
+  // ── Preview Event delegation (clicks inside messages) ──
+  messages.addEventListener('click', e => {
+    const btn = e.target.closest('.preview-btn');
+    if (!btn) return;
+    const pre = btn.closest('.code-block-wrapper').querySelector('pre');
+    const code = decodeHTML(pre.innerHTML);
+    openPreview(code, btn.dataset.lang);
+  });
+
+  closePreview.addEventListener('click', () => previewModal.classList.remove('open'));
+  previewModal.addEventListener('click', e => { if (e.target === previewModal) previewModal.classList.remove('open'); });
+  previewRefresh.addEventListener('click', () => {
+    const frame = previewFrame;
+    const src = frame.srcdoc;
+    frame.srcdoc = '';
+    requestAnimationFrame(() => { frame.srcdoc = src; });
+  });
 
   // ── Snippet Modal Management ──
   getCodeBtn.addEventListener('click', () => { updateCode(); codeModal.classList.add('open'); });
   closeModal.addEventListener('click', () => codeModal.classList.remove('open'));
   codeModal.addEventListener('click', e => { if (e.target === codeModal) codeModal.classList.remove('open'); });
 
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') codeModal.classList.remove('open'); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { codeModal.classList.remove('open'); previewModal.classList.remove('open'); } });
 
   modalTabs.querySelectorAll('.tab').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1401,43 +1672,10 @@
     const temp = parseFloat(tempSlider.value);
     let code = '';
 
-    if (currentLang === 'js-fetch') {
-      code = `const response = await fetch("${origin}/api/chat", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    model: "${model}",
-    messages: [{ role: "user", content: "Hello!" }],
-    streaming: ${streaming},
-    thinking: ${thinking},
-    temperature: ${temp},
-    freemodelapi: "${key}"
-  })
-});
+    if (currentLang === 'python') {
+      code = `import requests, json
 
-${streaming ? `const reader = response.body.getReader();
-const decoder = new TextDecoder();
-let buf = '';
-while (true) {
-  const { done, value } = await reader.read();
-  if (done) break;
-  buf += decoder.decode(value, { stream: true });
-  const lines = buf.split('\\n');
-  buf = lines.pop();
-  for (const line of lines) {
-    if (!line.startsWith('data: ')) continue;
-    try {
-      const p = JSON.parse(line.slice(6));
-      if (p.delta?.text) process.stdout.write(p.delta.text);
-    } catch {}
-  }
-}` : `const data = await response.json();
-console.log(data.content[0].text);`}`;
-    }
-
-    else if (currentLang === 'python-req') {
-      code = `import json, requests
-
+# Chat completion
 res = requests.post("${origin}/api/chat",
   json={
     "model": "${model}",
@@ -1456,50 +1694,123 @@ ${streaming ? `for line in res.iter_lines():
         if not s: continue
         try:
             p = json.loads(s)
-            print(p.get("delta", {}).get("text", ""), end="", flush=True)
-        except: pass` : `print(res.json()["content"][0]["text"])`}`;
-    }
+            if p.get("delta", {}).get("text", ""):
+                print(p["delta"]["text"], end="", flush=True)
+        except: pass` : `data = res.json()
+text = next((b["text"] for b in data["content"] if b["type"] == "text"), "")
+print(text)`}
 
-    else if (currentLang === 'python-lc') {
-      code = `from bypassed_anthropic import BypassedChatAnthropic
 
-chat = BypassedChatAnthropic(
-    model="${model}",
-    api_key="${key}",
-    temperature=${temp}
+# Web search (if available)
+search_res = requests.post("${origin}/api/chat-with-search",
+  json={
+    "model": "${model}",
+    "messages": [{"role": "user", "content": "Latest AI news?"}],
+    "temperature": ${temp},
+    "freemodelapi": "${key}"
+  }
 )
-
-${streaming ? `for chunk in chat.stream("Hello!"):
-    print(chunk.message.content, end="", flush=True)` : `print(chat.invoke("Hello!").content)`}`;
+search_data = search_res.json()
+print(search_data["content"][0]["text"])`;
     }
 
-    else if (currentLang === 'js-lc') {
-      code = `import { BypassedChatAnthropic } from './bypassed_anthropic.mjs';
-
-const chat = new BypassedChatAnthropic({
-  model: "${model}",
-  apiKey: "${key}",
-  temperature: ${temp}
+    else if (currentLang === 'javascript') {
+      code = `// Chat completion
+const res = await fetch("${origin}/api/chat", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    model: "${model}",
+    messages: [{ role: "user", content: "Hello!" }],
+    streaming: ${streaming},
+    thinking: ${thinking},
+    temperature: ${temp},
+    freemodelapi: "${key}"
+  })
 });
 
-const res = await chat.invoke("Hello!");
-console.log(res.content);`;
+${streaming ? `const reader = res.body.getReader();
+const dec = new TextDecoder();
+let buf = "";
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) break;
+  buf += dec.decode(value, { stream: true });
+  const lines = buf.split("\\n");
+  buf = lines.pop();
+  for (const line of lines) {
+    if (!line.startsWith("data: ")) continue;
+    try {
+      const p = JSON.parse(line.slice(6));
+      if (p.delta?.text) process.stdout.write(p.delta.text);
+    } catch {}
+  }
+}` : `const data = await res.json();
+const textBlock = data.content?.find(c => c.type === "text");
+console.log(textBlock?.text || "");`}
+
+
+// Web search (if available)
+const searchRes = await fetch("${origin}/api/chat-with-search", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    model: "${model}",
+    messages: [{ role: "user", content: "Latest AI news?" }],
+    temperature: ${temp},
+    freemodelapi: "${key}"
+  })
+});
+const searchData = await searchRes.json();
+console.log(searchData.content[0].text);`;
     }
 
-    else if (currentLang === 'js-sdk') {
-      code = `import { BypassedClaudeClient } from './bypassed_anthropic.mjs';
+    else if (currentLang === 'agent') {
+      code = `# Agent SDK Setup — LangChain + Tavily Web Search Agent
+# Uses your server's /api/chat-with-search endpoint
 
-const client = new BypassedClaudeClient({ apiKey: "${key}" });
+import requests
+import json
 
-const res = await client.create({
-  model: "${model}",
-  messages: [{ role: "user", content: "Hello!" }],
-  stream: ${streaming},
-  thinking: ${thinking},
-  temperature: ${temp}
-});
+SERVER = "${origin}"
+API_KEY = "${key}"
+MODEL = "${model}"
 
-${streaming ? `res.on('data', chunk => { /* handle SSE chunk */ });` : `console.log(res.content[0].text);`}`;
+def chat_with_search(query):
+    """Agent that searches the web before answering."""
+    res = requests.post(f"{SERVER}/api/chat-with-search", json={
+        "model": MODEL,
+        "messages": [{"role": "user", "content": query}],
+        "temperature": ${temp},
+        "freemodelapi": API_KEY
+    })
+    data = res.json()
+    text = next((b["text"] for b in data["content"] if b["type"] == "text"), "")
+    return text
+
+# Example: agent answers with real-time web data
+answer = chat_with_search("What are the latest developments in AI?")
+print("Agent:", answer)
+
+
+# ── JavaScript version ──
+/*
+async function chatWithSearch(query) {
+  const res = await fetch(SERVER + "/api/chat-with-search", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: MODEL,
+      messages: [{ role: "user", content: query }],
+      temperature: ${temp},
+      freemodelapi: API_KEY
+    })
+  });
+  const data = await res.json();
+  const textBlock = data.content?.find(c => c.type === "text");
+  return textBlock?.text || "";
+}
+*/`;
     }
 
     codeView.textContent = code;
