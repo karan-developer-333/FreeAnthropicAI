@@ -37,6 +37,10 @@
       --transition-speed: 0.3s;
     }
 
+    html {
+      overflow-x: hidden;
+    }
+
     body {
       background-color: var(--bg-dark);
       background-image: 
@@ -55,13 +59,15 @@
     .app-container {
       display: flex;
       width: 100vw;
-      height: 100vh;
+      min-height: 100vh;
       position: relative;
+      flex-wrap: wrap;
     }
 
     /* Sidebar Configurations Panel */
     .sidebar {
       width: 380px;
+      max-width: 380px;
       background: var(--bg-card);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
@@ -71,6 +77,48 @@
       padding: 30px 24px;
       z-index: 10;
       overflow-y: auto;
+      transition: transform 0.3s ease, visibility 0.3s ease;
+    }
+
+    .app-container.sidebar-hidden .sidebar {
+      transform: translateX(-100%);
+      visibility: hidden;
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+    }
+
+    .app-container.sidebar-hidden .chat-panel {
+      width: 100%;
+    }
+
+    .sidebar-toggle-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(15, 15, 25, 0.98);
+      color: var(--text-main);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition-speed);
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 10002;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+    }
+
+    .sidebar-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .sidebar-toggle-btn svg {
+      width: 18px;
+      height: 18px;
     }
 
     /* Main Chat Interface Panel */
@@ -408,18 +456,18 @@
     }
 
     .message-bubble {
-      padding: 16px 20px;
-      border-radius: 18px;
-      font-size: 14.5px;
+      /* padding: 16px 20px; */
+      /* border-radius: 18px; */
+      font-size: 12.5px;
       line-height: 1.6;
       position: relative;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+      /* box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15); */
     }
 
     .message-container.user .message-bubble {
-      background: linear-gradient(135deg, var(--primary) 0%, rgba(139, 92, 246, 0.7) 100%);
+      /* background: linear-gradient(135deg, var(--primary) 0%, rgba(139, 92, 246, 0.7) 100%); */
       color: #fff;
-      border-bottom-right-radius: 3px;
+      /* border-bottom-right-radius: 3px; */
     }
 
     .message-container.assistant .message-bubble {
@@ -719,6 +767,184 @@
       overflow-x: auto;
     }
 
+    /* Responsive Breakpoints */
+    @media (max-width: 1120px) {
+      .app-container {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        max-width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        padding: 24px 20px 18px;
+      }
+      .chat-panel {
+        width: 100%;
+        height: auto;
+      }
+      .chat-header {
+        padding: 0 24px;
+      }
+      .chat-messages {
+        padding: 30px 24px 24px;
+      }
+      .chat-input-area {
+        padding: 22px 24px 28px;
+      }
+      .modal-content {
+        width: calc(100% - 40px);
+        max-width: 100%;
+      }
+    }
+
+    @media (max-width: 820px) {
+      body {
+        min-width: auto;
+      }
+      .sidebar {
+        padding: 20px 18px 16px;
+      }
+      .sidebar-toggle-btn {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        width: 42px;
+        height: 42px;
+        z-index: 999;
+        border-radius: 14px;
+        background: rgba(15, 15, 25, 0.98);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 14px 40px rgba(0, 0, 0, 0.25);
+      }
+      .chat-header {
+        padding-left: 70px;
+      }
+      .app-container.sidebar-hidden .chat-header {
+        padding-left: 18px;
+      }
+      .app-container.sidebar-hidden .sidebar {
+        transform: translateX(-100%);
+        visibility: hidden;
+        position: fixed;
+      }
+      .app-container.sidebar-hidden .chat-panel {
+        width: 100%;
+      }
+      .brand-section {
+        gap: 10px;
+      }
+      .brand-name {
+        font-size: 18px;
+      }
+      .config-section {
+        margin-bottom: 22px;
+      }
+      .input-wrapper {
+        margin-bottom: 15px;
+      }
+      .input-field,
+      .select-field {
+        font-size: 13px;
+      }
+      .toggle-row {
+        padding: 10px 12px;
+      }
+      .get-code-btn {
+        padding: 12px 16px;
+      }
+      .chat-header {
+        padding: 0 18px;
+      }
+      .chat-messages {
+        padding: 24px 18px 20px;
+      }
+      .chat-input-area {
+        padding: 18px 18px 38px;
+      }
+      .input-bar-container {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding: 12px 14px 12px 16px;
+      }
+      .chat-text-input {
+        min-height: 80px;
+      }
+      .send-btn {
+        width: 40px;
+        border-radius: 50%;
+        right:10%;
+        bottom:5%;
+        position: absolute;
+      }
+      .message-container {
+        max-width: 100%;
+      }
+      .message-bubble {
+        word-break: break-word;
+      }
+      .modal-content {
+        width: calc(100% - 32px);
+        max-width: 100%;
+        max-height: 92vh;
+      }
+      .modal-body {
+        padding: 20px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .sidebar {
+        padding: 18px 16px 14px;
+      }
+      .brand-name {
+        font-size: 17px;
+      }
+      .config-title,
+      .input-label,
+      .toggle-label,
+      .toggle-desc,
+      .header-title,
+      .header-subtitle,
+      .welcome-title,
+      .welcome-desc {
+        font-size: 14px;
+      }
+      .chat-header {
+        padding: 0 14px;
+      }
+      .chat-messages {
+        padding: 20px 14px 18px;
+      }
+      .chat-input-area {
+        padding: 16px 14px 18px;
+      }
+      .toggle-row {
+        padding: 10px 12px;
+      }
+      .switch {
+        width: 40px;
+        height: 22px;
+      }
+      .slider:before {
+        height: 16px;
+        width: 16px;
+        left: 2px;
+        bottom: 2px;
+      }
+      .code-container {
+        width: 100%;
+      }
+      .code-header {
+        padding: 10px 14px;
+      }
+      .code-block {
+        padding: 16px;
+        font-size: 12px;
+      }
+    }
+
     /* Welcome / Tutorial Panel */
     .welcome-container {
       flex: 1;
@@ -768,6 +994,12 @@
 
   <div class="app-container">
     
+    <button class="sidebar-toggle-btn" id="sidebarToggleBtn" aria-label="Toggle sidebar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+
     <!-- --------------------------------------------------
          SIDEBAR PANEL
          -------------------------------------------------- -->
@@ -859,7 +1091,7 @@
          -------------------------------------------------- -->
     <main class="chat-panel">
       
-      <!-- Top Header -->
+    <!-- Top Header -->
       <header class="chat-header">
         <div class="header-info">
           <h1 class="header-title" id="activeModelName">Claude 3.7 Sonnet</h1>
@@ -957,6 +1189,8 @@
     const welcomeScreen = document.getElementById('welcomeScreen');
     const chatInput = document.getElementById('chatInput');
     const sendBtn = document.getElementById('sendBtn');
+    const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+    const appContainer = document.querySelector('.app-container');
     
     const getCodeBtn = document.getElementById('getCodeBtn');
     const codeModal = document.getElementById('codeModal');
@@ -983,6 +1217,54 @@
     apiKeyInput.addEventListener('input', updateCodeSnippet);
     thinkingToggle.addEventListener('change', updateCodeSnippet);
     streamingToggle.addEventListener('change', updateCodeSnippet);
+
+    const MOBILE_BREAKPOINT = 820;
+
+    function updateSidebarButton(isHidden) {
+      const iconPath = sidebarToggleBtn.querySelector('path');
+      if (!iconPath) return;
+      if (isHidden) {
+        iconPath.setAttribute('d', 'M4 6h16M4 12h16M4 18h16');
+        sidebarToggleBtn.setAttribute('aria-label', 'Open sidebar');
+      } else {
+        iconPath.setAttribute('d', 'M6 18L18 6M6 6l12 12');
+        sidebarToggleBtn.setAttribute('aria-label', 'Close sidebar');
+      }
+    }
+
+    function setSidebarHidden(hidden) {
+      if (hidden) {
+        appContainer.classList.add('sidebar-hidden');
+      } else {
+        appContainer.classList.remove('sidebar-hidden');
+      }
+      updateSidebarButton(hidden);
+    }
+
+    function initializeSidebarState() {
+      if (window.innerWidth <= MOBILE_BREAKPOINT) {
+        setSidebarHidden(true);
+      } else {
+        setSidebarHidden(false);
+      }
+    }
+
+    if (sidebarToggleBtn) {
+      sidebarToggleBtn.addEventListener('click', () => {
+        const isHidden = !appContainer.classList.contains('sidebar-hidden');
+        setSidebarHidden(isHidden);
+      });
+    }
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth <= MOBILE_BREAKPOINT) {
+        setSidebarHidden(true);
+      } else {
+        setSidebarHidden(false);
+      }
+    });
+
+    initializeSidebarState();
 
     // Auto resize input textbox
     chatInput.addEventListener('input', function() {
