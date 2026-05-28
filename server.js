@@ -2,13 +2,14 @@ import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { BypassedClaudeClient } from './bypassed_anthropic.js';
+import { BypassedClaudeClient, claudeModels, claudeAliases } from './bypassed_anthropic.js';
 import { tavily } from '@tavily/core';
 import { ChatOpenAI } from '@langchain/openai';
 import { DynamicTool } from '@langchain/core/tools';
 import { createReactAgent } from '@langchain/langgraph/prebuilt';
 import { HumanMessage, AIMessage } from '@langchain/core/messages';
 import { ToolNode } from '@langchain/langgraph/prebuilt';
+import morgan from 'morgan';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,6 +17,8 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3006;
 const PROD_URL = process.env.PROD_URL || 'https://free-anthropic.vercel.app';
+
+app.use(morgan('dev'));
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -59,7 +62,7 @@ app.post('/api/chat', async (req, res) => {
         'X-Accel-Buffering': 'no'
       });
       try {
-        const stream = await client.create({ model, messages, system, max_tokens, temperature, stream: true, thinking });
+        const stream = await client.create({ model: model || "claude-opus-4-7", messages, system, max_tokens, temperature, stream: true, thinking });
         stream.pipe(res);
       } catch (streamErr) {
         console.error('[Stream error]', streamErr);
@@ -79,7 +82,7 @@ app.post('/api/chat', async (req, res) => {
 // ── OpenAI-compatible endpoint (for LangChain ChatOpenAI) ──
 app.post('/api/v1/chat/completions', async (req, res) => {
   try {
-    const { model = 'claude-sonnet-4-20250514', messages = [], temperature = 0.7, max_tokens, stream = false, tools } = req.body;
+    const { model = 'claude-sonnet-4-20250514', messages = [], temperature = 0.7, max_tokens, stream = false, tools, thinking = false } = req.body;
     const apiKey = getApiKey(req);
     const client = makeClient(apiKey);
 
@@ -114,7 +117,7 @@ app.post('/api/v1/chat/completions', async (req, res) => {
     }
 
     const result = await client.create({
-      model, messages: bypassMessages, system, temperature, max_tokens, stream: false, thinking: false,
+      model, messages: bypassMessages, system, temperature, max_tokens, stream: false, thinking,
       tools: anthropicTools
     });
 
@@ -223,6 +226,14 @@ When you do search:
     console.error('[Web Search agent error]', err);
     res.status(200).json({ content: [{ type: 'text', text: '⚠️ Error: ' + err.message }] });
   }
+});
+
+// ── Models endpoint ──
+app.get('/api/models', (req, res) => {
+  res.json({
+    models: claudeModels,
+    aliases: claudeAliases
+  });
 });
 
 app.listen(PORT, () => {

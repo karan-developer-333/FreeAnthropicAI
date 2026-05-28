@@ -2,6 +2,29 @@ import https from 'https';
 import zlib from 'zlib';
 import crypto from 'crypto';
 
+
+export const claudeModels = [
+  // --- Active Latest Generation (Recommended) ---
+  "claude-opus-4-7",      // Latest Opus (Apr 2026)
+  "claude-sonnet-4-6",    // Latest Sonnet (Feb 2026)
+  "claude-opus-4-6",      // Previous Opus (Feb 2026)
+  "claude-haiku-4-5",     // Latest Haiku (Oct 2025)
+
+  // --- Active Legacy Models (Still Supported) ---
+  "claude-opus-4-5",      // (Nov 2025)
+  "claude-sonnet-4-5",    // (Sep 2025)
+  "claude-opus-4-1",      // (Aug 2025)
+  "claude-opus-4-0",      // (May 2025) - Retiring soon (Jun 2026)
+  "claude-sonnet-4-0",    // (May 2025) - Retiring soon (Jun 2026)
+
+  // --- Deprecated (Retiring or Retired) ---
+  "claude-3-haiku-20240307",       // Deprecated (Retired Apr 2026)
+  "claude-3-7-sonnet-20250219",    // Retired (Feb 2026)
+];
+
+// Aliases (Automatically resolve to latest in their tier)
+export const claudeAliases = ["opus", "sonnet", "haiku"];
+
 // Global HTTP Keep-Alive Agent for TCP/TLS connection pooling
 const keepAliveAgent = new https.Agent({
   keepAlive: true,
@@ -21,7 +44,7 @@ export class BypassedClaudeClient {
       throw new Error('Missing API key. Set FREEMODEL_API_KEY or pass `freemodelapi` in the request body.');
     }
     this.model = options.model || "claude-opus-4-7";
-    this.maxTokens = options.maxTokens || 16000;
+    this.maxTokens = options.maxTokens || 64000;
     this.temperature = options.temperature;
   }
 
@@ -45,15 +68,28 @@ export class BypassedClaudeClient {
     const isDirectAnthropic = this.apiKey.trim().startsWith('sk-ant-');
     const targetHost = isDirectAnthropic ? 'api.anthropic.com' : 'cc.freemodel.dev';
     
-    let targetModel = isDirectAnthropic ? 'claude-3-7-sonnet-20250219' : 'claude-opus-4-7';
-    if (model) {
-      const m = model.toLowerCase();
-      if (m.includes('sonnet')) {
-        targetModel = isDirectAnthropic ? 'claude-3-7-sonnet-20250219' : 'claude-sonnet-4-6';
+    // Resolve aliases to latest in their tier
+    let resolvedModel = model || this.model;
+    const lowerModel = resolvedModel.toLowerCase();
+    if (lowerModel === 'opus') resolvedModel = 'claude-opus-4-7';
+    else if (lowerModel === 'sonnet') resolvedModel = 'claude-sonnet-4-6';
+    else if (lowerModel === 'haiku') resolvedModel = 'claude-haiku-4-5';
+
+    let targetModel = resolvedModel;
+    if (isDirectAnthropic) {
+      const m = resolvedModel.toLowerCase();
+      if (m.includes('opus')) {
+        targetModel = 'claude-3-opus-20240229';
+      } else if (m.includes('sonnet')) {
+        targetModel = 'claude-3-7-sonnet-20250219';
       } else if (m.includes('haiku')) {
-        targetModel = isDirectAnthropic ? 'claude-3-5-haiku-20241022' : 'claude-haiku-4-5-20251001';
-      } else if (m.includes('opus')) {
-        targetModel = isDirectAnthropic ? 'claude-3-opus-20240229' : 'claude-opus-4-7';
+        if (m.includes('20240307')) {
+          targetModel = 'claude-3-haiku-20240307';
+        } else {
+          targetModel = 'claude-3-5-haiku-20241022';
+        }
+      } else {
+        targetModel = 'claude-3-7-sonnet-20250219'; // Fallback for direct Anthropic API
       }
     }
 
@@ -100,7 +136,7 @@ export class BypassedClaudeClient {
       requestBody.tools = tools;
     }
 
-    const isSonnet = targetModel === 'claude-sonnet-4-6' || targetModel === 'claude-3-7-sonnet-20250219';
+    const isSonnet = targetModel.toLowerCase().includes('sonnet');
     if (isSonnet) {
       if (thinking === true) {
         requestBody.thinking = {

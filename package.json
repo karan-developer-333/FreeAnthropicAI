@@ -1,7 +1,7 @@
 {
-  "name": "claude-playground",  
-  "version": "1.0.0",  
-  "type": "module",  
+  "name": "claude-playground",
+  "version": "1.0.0",
+  "type": "module",
   "dependencies": {
     "@langchain/community": "^1.1.28",
     "@langchain/core": "^1.1.48",
@@ -9,6 +9,7 @@
     "@langchain/openai": "^1.4.7",
     "@tavily/core": "^0.7.3",
     "dotenv": "^16.4.5",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "morgan": "^1.10.1"
   }
 }
