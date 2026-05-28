@@ -137,7 +137,7 @@ export class BypassedClaudeClient {
     }
 
     const isSonnet = targetModel.toLowerCase().includes('sonnet');
-    if (isSonnet) {
+    if (isSonnet && isDirectAnthropic) {
       if (thinking === true) {
         requestBody.thinking = {
           type: 'enabled',
@@ -160,6 +160,7 @@ export class BypassedClaudeClient {
       throw new Error('API key missing: cannot create request without a valid FREEMODEL_API_KEY or freemodelapi value.');
     }
 
+    console.log("REQUEST BODY TO UPSTREAM:", JSON.stringify(requestBody, null, 2));
     const bodyStr = JSON.stringify(requestBody);
 
     const headers = {

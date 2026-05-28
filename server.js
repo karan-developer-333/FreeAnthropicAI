@@ -15,7 +15,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 3006;
+const PORT = process.env.PORT || 8080;
 const PROD_URL = process.env.PROD_URL || 'https://free-anthropic.vercel.app';
 
 app.use(morgan('dev'));
@@ -236,7 +236,16 @@ app.get('/api/models', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, (err) => {
+  if (err) {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`\n❌ Error: Port ${PORT} is already in use!`);
+      console.error(`Please kill the process using this port, run with a different PORT env, or check for orphaned processes.\n`);
+    } else {
+      console.error(`\n❌ Error starting server:`, err.message);
+    }
+    process.exit(1);
+  }
   console.log(`\n=============================================================`);
   console.log(`🤖 Claude Bypass Server running at:`);
   console.log(`👉 http://localhost:${PORT}`);
