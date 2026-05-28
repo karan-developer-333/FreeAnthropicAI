@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { BypassedClaudeClient, claudeModels, claudeAliases } from './bypassed_anthropic.js';
+import { BypassedClaudeClient, claudeModels, claudeAliases, freemodelModels } from './bypassed_anthropic.js';
 import { tavily } from '@tavily/core';
 import { ChatOpenAI } from '@langchain/openai';
 import { DynamicTool } from '@langchain/core/tools';
@@ -50,11 +50,12 @@ function makeClient(apiKey) {
 // ── Standard chat bypass ──
 app.post('/api/chat', async (req, res) => {
   try {
-    const { thinking = false, streaming = false, model, messages = [], system, max_tokens, temperature } = req.body;
+    const { thinking = false, streaming = false, stream: reqStream, model, messages = [], system, max_tokens, temperature } = req.body;
+    const useStreaming = streaming || reqStream;
     const apiKey = getApiKey(req);
     const client = makeClient(apiKey);
 
-    if (streaming) {
+    if (useStreaming) {
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache, no-transform',
@@ -237,7 +238,9 @@ When you do search:
 app.get('/api/models', (req, res) => {
   res.json({
     models: claudeModels,
-    aliases: claudeAliases
+    aliases: claudeAliases,
+    freemodel_models: freemodelModels,
+    key_hint: "For freemodel.dev API, use fe_oa_... keys"
   });
 });
 

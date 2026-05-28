@@ -1,31 +1,54 @@
 import https from 'https';
 import zlib from 'zlib';
 import crypto from 'crypto';
+import { Transform } from 'stream';
 
 
 export const claudeModels = [
-  // --- Active Latest Generation (Recommended) ---
-  "claude-opus-4-7",      // Latest Opus (Apr 2026)
-  "claude-sonnet-4-6",    // Latest Sonnet (Feb 2026)
-  "claude-opus-4-6",      // Previous Opus (Feb 2026)
-  "claude-haiku-4-5",     // Latest Haiku (Oct 2025)
-
-  // --- Active Legacy Models (Still Supported) ---
-  "claude-opus-4-5",      // (Nov 2025)
-  "claude-sonnet-4-5",    // (Sep 2025)
-  "claude-opus-4-1",      // (Aug 2025)
-  "claude-opus-4-0",      // (May 2025) - Retiring soon (Jun 2026)
-  "claude-sonnet-4-0",    // (May 2025) - Retiring soon (Jun 2026)
-
-  // --- Deprecated (Retiring or Retired) ---
-  "claude-3-haiku-20240307",       // Deprecated (Retired Apr 2026)
-  "claude-3-7-sonnet-20250219",    // Retired (Feb 2026)
+  "claude-opus-4-7",
+  "claude-sonnet-4-6",
+  "claude-opus-4-6",
+  "claude-haiku-4-5",
+  "claude-opus-4-5",
+  "claude-sonnet-4-5",
+  "claude-opus-4-1",
+  "claude-opus-4-0",
+  "claude-sonnet-4-0",
+  "claude-3-haiku-20240307",
+  "claude-3-7-sonnet-20250219",
 ];
 
-// Aliases (Automatically resolve to latest in their tier)
 export const claudeAliases = ["opus", "sonnet", "haiku"];
 
-// Global HTTP Keep-Alive Agent for TCP/TLS connection pooling
+export const freemodelModels = [
+  "gpt-5.5",
+  "gpt-5.4",
+  "gpt-5.4-mini",
+  "gpt-5.3-codex",
+];
+
+const freemodelModelMap = {
+  'claude-opus-4-7': 'gpt-5.5',
+  'claude-sonnet-4-6': 'gpt-5.4',
+  'claude-haiku-4-5': 'gpt-5.4-mini',
+  'claude-opus-4-6': 'gpt-5.5',
+  'claude-opus-4-5': 'gpt-5.5',
+  'claude-sonnet-4-5': 'gpt-5.4',
+  'claude-sonnet-4-0': 'gpt-5.4',
+  'claude-opus-4-1': 'gpt-5.5',
+  'claude-opus-4-0': 'gpt-5.5',
+  'gpt-5.5': 'gpt-5.5',
+  'gpt-5.4': 'gpt-5.4',
+  'gpt-5.4-mini': 'gpt-5.4-mini',
+  'gpt-5.3-codex': 'gpt-5.3-codex',
+};
+
+const freemodelAliasMap = {
+  opus: 'gpt-5.5',
+  sonnet: 'gpt-5.4',
+  haiku: 'gpt-5.4-mini',
+};
+
 const keepAliveAgent = new https.Agent({
   keepAlive: true,
   maxSockets: 128,
@@ -33,10 +56,46 @@ const keepAliveAgent = new https.Agent({
   timeout: 60000
 });
 
-/**
- * A standalone, zero-dependency client that bypasses the Claude Code CLI restriction.
- * Mimics the official Anthropic SDK message creation interface.
- */
+function openaiToAnthropicSSE() {
+  let started = false;
+  let messageId = 'msg_' + crypto.randomBytes(12).toString('hex');
+  return new Transform({
+    readableObjectMode: false,
+    writableObjectMode: false,
+    transform(chunk, encoding, callback) {
+      const str = chunk.toString('utf8');
+      const lines = str.split('\n');
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if (!raw || raw === '[DONE]') continue;
+        try {
+          const p = JSON.parse(raw);
+          const choices = p.choices || [];
+          for (const c of choices) {
+            const delta = c.delta || {};
+            const finish = c.finish_reason;
+            if (delta.role === 'assistant' && !started) {
+              started = true;
+              this.push(`data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}\n\n`);
+            }
+            if (delta.content) {
+              this.push(`data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":${JSON.stringify(delta.content)}}}\n\n`);
+            }
+            if (finish === 'stop') {
+              this.push(`data: {"type":"content_block_stop","index":0}\n\n`);
+              this.push(`data: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":0}}\n\n`);
+            }
+          }
+        } catch (e) {
+          // skip parse errors
+        }
+      }
+      callback();
+    }
+  });
+}
+
 export class BypassedClaudeClient {
   constructor(options = {}) {
     this.apiKey = (options.apiKey?.toString().trim() || process.env.FREEMODEL_API_KEY?.toString().trim()) || null;
@@ -48,9 +107,6 @@ export class BypassedClaudeClient {
     this.temperature = options.temperature;
   }
 
-  /**
-   * Creates a message (supports both streaming and standard responses)
-   */
   async create(params = {}) {
     const {
       messages = [],
@@ -64,13 +120,18 @@ export class BypassedClaudeClient {
       onToken
     } = params;
 
-    // 1. Map model name depending on whether we route directly to Anthropic or via Freemodel gateway
-    const isDirectAnthropic = this.apiKey.trim().startsWith('sk-ant-');
-    const targetHost = isDirectAnthropic ? 'api.anthropic.com' : 'cc.freemodel.dev';
-    
-    // Resolve aliases to latest in their tier
+    const keyStr = this.apiKey.trim();
+    const isFreemodelApi = keyStr.startsWith('fe_oa_');
+    const isDirectAnthropic = !isFreemodelApi && keyStr.startsWith('sk-ant-');
+    const targetHost = isDirectAnthropic ? 'api.anthropic.com' : isFreemodelApi ? 'api.freemodel.dev' : 'cc.freemodel.dev';
+
     let resolvedModel = model || this.model;
     const lowerModel = resolvedModel.toLowerCase();
+
+    if (isFreemodelApi) {
+      return this._createFreemodel({ messages, clientSystem, resolvedModel, lowerModel, max_tokens, temperature, clientStream, onToken });
+    }
+
     if (lowerModel === 'opus') resolvedModel = 'claude-opus-4-7';
     else if (lowerModel === 'sonnet') resolvedModel = 'claude-sonnet-4-6';
     else if (lowerModel === 'haiku') resolvedModel = 'claude-haiku-4-5';
@@ -89,14 +150,13 @@ export class BypassedClaudeClient {
           targetModel = 'claude-3-5-haiku-20241022';
         }
       } else {
-        targetModel = 'claude-3-7-sonnet-20250219'; // Fallback for direct Anthropic API
+        targetModel = 'claude-3-7-sonnet-20250219';
       }
     }
 
     const sessionId = crypto.randomUUID();
     const deviceId = crypto.randomBytes(16).toString('hex');
 
-    // 2. Format system prompt to inject mandatory billing and identity headers
     const systemArray = [
       {
         type: 'text',
@@ -117,7 +177,6 @@ export class BypassedClaudeClient {
       }
     }
 
-    // 3. Always stream upstream for robust auto decompression
     const requestBody = {
       model: targetModel,
       max_tokens,
@@ -151,7 +210,6 @@ export class BypassedClaudeClient {
       }
     }
 
-    // Only inject temperature if thinking is NOT enabled (forbidden by Anthropic API)
     if (temperature !== undefined && !requestBody.thinking) {
       requestBody.temperature = temperature;
     }
@@ -204,7 +262,11 @@ export class BypassedClaudeClient {
           });
           res.on('end', () => {
             const cleaned = errorBody.trim();
-            reject(new Error(`Upstream returned status ${res.statusCode}: ${cleaned || res.statusMessage}`));
+            let msg = `Upstream returned status ${res.statusCode}: ${cleaned || res.statusMessage}`;
+            if (!isDirectAnthropic && res.statusCode === 400) {
+              msg = `[Freemodel Gateway] ${msg}\nThe cc.freemodel.dev gateway is deprecated. If you have a fe_oa_... API key, it works with api.freemodel.dev (already supported).\n\nSolutions:\n1. Use an Anthropic API key starting with 'sk-ant-' for direct routing\n2. Use a fe_oa_... key (auto-routes to api.freemodel.dev)`;
+            }
+            reject(new Error(msg));
           });
           return;
         }
@@ -241,7 +303,6 @@ export class BypassedClaudeClient {
                 }
               }
             } catch (e) {
-              // Fallback to SSE parsing if JSON parse failed
             }
           }
 
@@ -275,7 +336,6 @@ export class BypassedClaudeClient {
                   }
                 }
               } catch (e) {
-                // Skip incomplete JSON
               }
             }
           }
@@ -303,12 +363,151 @@ export class BypassedClaudeClient {
       req.end();
     });
   }
+
+  async _createFreemodel({ messages, clientSystem, resolvedModel, lowerModel, max_tokens, temperature, clientStream, onToken }) {
+    const aliasMap = {
+      opus: 'gpt-5.5',
+      sonnet: 'gpt-5.4',
+      haiku: 'gpt-5.4-mini',
+    };
+
+    let gptModel = freemodelModelMap[resolvedModel] || aliasMap[lowerModel] || 'gpt-5.5';
+    if (!gptModel) gptModel = 'gpt-5.5';
+
+    const openaiMessages = [];
+    if (clientSystem) {
+      openaiMessages.push({ role: 'system', content: typeof clientSystem === 'string' ? clientSystem : JSON.stringify(clientSystem) });
+    }
+    for (const m of messages) {
+      openaiMessages.push({ role: m.role || 'user', content: m.content || '' });
+    }
+
+    const requestBody = {
+      model: gptModel,
+      messages: openaiMessages,
+      stream: clientStream,
+    };
+    if (max_tokens) requestBody.max_tokens = max_tokens;
+    if (temperature !== undefined) requestBody.temperature = temperature;
+
+    if (!this.apiKey) {
+      throw new Error('API key missing');
+    }
+
+    const bodyStr = JSON.stringify(requestBody);
+
+    const headers = {
+      'accept': clientStream ? 'text/event-stream' : 'application/json',
+      'content-type': 'application/json',
+      'authorization': `Bearer ${this.apiKey.trim()}`,
+      'content-length': Buffer.byteLength(bodyStr)
+    };
+
+    return new Promise((resolve, reject) => {
+      const req = https.request({
+        hostname: 'api.freemodel.dev',
+        port: 443,
+        path: '/v1/chat/completions',
+        method: 'POST',
+        headers,
+        agent: keepAliveAgent
+      }, (res) => {
+        if (res.statusCode !== 200) {
+          let errorBody = '';
+          res.on('data', (chunk) => {
+            errorBody += chunk.toString('utf8');
+          });
+          res.on('end', () => {
+            const cleaned = errorBody.trim();
+            reject(new Error(`Freemodel API returned status ${res.statusCode}: ${cleaned || res.statusMessage}`));
+          });
+          return;
+        }
+
+        let stream = res;
+        const encoding = res.headers['content-encoding'];
+        if (encoding === 'br') {
+          stream = res.pipe(zlib.createBrotliDecompress());
+        } else if (encoding === 'gzip') {
+          stream = res.pipe(zlib.createGunzip());
+        } else if (encoding === 'deflate') {
+          stream = res.pipe(zlib.createInflate());
+        }
+
+        if (clientStream) {
+          const converter = openaiToAnthropicSSE();
+          stream.pipe(converter);
+          resolve(converter);
+          return;
+        }
+
+        let accumulatedData = '';
+        stream.on('data', (chunk) => {
+          accumulatedData += chunk.toString('utf8');
+        });
+
+        stream.on('end', () => {
+          let content = '';
+          let finishReason = 'stop';
+          let inputTokens = 0;
+          let outputTokens = 0;
+
+          try {
+            const parsed = JSON.parse(accumulatedData.trim());
+            if (parsed.choices && parsed.choices.length > 0) {
+              content = parsed.choices[0].message?.content || '';
+              finishReason = parsed.choices[0].finish_reason || 'stop';
+            }
+            if (parsed.usage) {
+              inputTokens = parsed.usage.prompt_tokens || 0;
+              outputTokens = parsed.usage.completion_tokens || 0;
+            }
+          } catch (e) {
+            const lines = accumulatedData.split('\n');
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const raw = line.slice(6).trim();
+                if (!raw || raw === '[DONE]') continue;
+                try {
+                  const p = JSON.parse(raw);
+                  const choices = p.choices || [];
+                  for (const c of choices) {
+                    if (c.delta?.content) content += c.delta.content;
+                    if (c.finish_reason) finishReason = c.finish_reason;
+                  }
+                } catch (e2) {}
+              }
+            }
+          }
+
+          const anthropicResponse = {
+            id: 'msg_' + crypto.randomBytes(12).toString('hex'),
+            type: "message",
+            role: "assistant",
+            content: [{ type: "text", text: content }],
+            model: gptModel,
+            stop_reason: finishReason === 'stop' ? 'end_turn' : finishReason,
+            stop_sequence: null,
+            usage: {
+              input_tokens: inputTokens,
+              output_tokens: outputTokens
+            }
+          };
+
+          resolve(anthropicResponse);
+        });
+
+        stream.on('error', (err) => reject(err));
+      });
+
+      req.on('error', (err) => reject(err));
+      req.write(bodyStr);
+      req.end();
+    });
+  }
 }
 
-/**
- * Custom LangChain Chat Model for JavaScript/TypeScript environment.
- * Requires importing @langchain/core dependency when used in a LangChain project.
- */
+
 export class BypassedChatAnthropic {
   static getLangChainClass(BaseChatModelClass) {
     return class extends BaseChatModelClass {
