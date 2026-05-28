@@ -723,6 +723,131 @@
       color: var(--text);
     }
 
+    .input-area { position: relative; }
+
+    .input-area.dragover .input-bar {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent-glow);
+    }
+    .input-area.dragover::after {
+      content: 'Drop files here';
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-panel);
+      border: 2px dashed var(--accent);
+      border-radius: var(--radius-md);
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 14px;
+      opacity: 0.92;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .input-actions {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+
+    .attach-btn {
+      width: 28px; height: 28px;
+      flex-shrink: 0;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      border: none;
+      color: var(--text-3);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .attach-btn:hover { color: var(--text-2); background: var(--bg-hover); }
+    .attach-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; }
+
+    .file-batches {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 6px;
+      max-height: 140px;
+      overflow-y: auto;
+      animation: fade-up 0.2s ease;
+    }
+    .file-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 8px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 11.5px;
+      color: var(--text);
+      animation: fade-up 0.2s ease forwards;
+    }
+    .file-chip-thumb {
+      width: 24px; height: 24px;
+      border-radius: 3px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: var(--bg-input);
+    }
+    .file-chip-icon {
+      width: 24px; height: 24px;
+      border-radius: 3px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg-input);
+      color: var(--text-3);
+      flex-shrink: 0;
+      font-size: 13px;
+    }
+    .file-chip-info {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .file-chip-name {
+      font-weight: 500;
+      font-size: 11.5px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .file-chip-size {
+      font-size: 10px;
+      color: var(--text-3);
+      font-family: var(--font-mono);
+    }
+
+    .attached-image {
+      max-width: 100%;
+      max-height: 300px;
+      border-radius: var(--radius-sm);
+      margin: 4px 0;
+      display: block;
+      object-fit: contain;
+      background: var(--bg-input);
+    }
+    .attached-file-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      color: var(--text-2);
+      margin: 2px 0;
+    }
+
     .chat-input {
       flex: 1;
       background: transparent;
@@ -1174,13 +1299,20 @@
     </div>
 
     <!-- Input System -->
-    <div class="input-area">
+    <div class="input-area" id="inputArea">
+      <div class="file-batches" id="fileBatches"></div>
       <div class="paste-batches" id="pasteBatches"></div>
       <div class="input-bar">
         <textarea id="chatInput" class="chat-input" placeholder="Type or paste code snippets…" rows="1"></textarea>
-        <button class="send-btn" id="sendBtn" aria-label="Commit Message">
-          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-        </button>
+        <div class="input-actions">
+          <button class="attach-btn" id="attachBtn" type="button" aria-label="Attach file">
+            <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13"/></svg>
+          </button>
+          <input type="file" id="fileInput" multiple accept="image/*,application/pdf,text/plain,text/csv,application/json,text/html,text/markdown" hidden>
+          <button class="send-btn" id="sendBtn" aria-label="Commit Message">
+            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -1263,8 +1395,14 @@
   const previewRefresh = $('previewRefresh');
   const previewFullscreen = $('previewFullscreen');
 
+  const attachBtn = $('attachBtn');
+  const fileInput = $('fileInput');
+  const fileBatches = $('fileBatches');
+  const inputArea = $('inputArea');
+
   let chatHistory = [];
   let pasteBatches = [];
+  let fileAttachments = [];
   let currentLang = 'python';
   const MOBILE_BP = 768;
 
@@ -1371,7 +1509,7 @@
 
   async function sendMessage() {
     const text = chatInput.value.trim();
-    if (!text && !pasteBatches.length) return;
+    if (!text && !pasteBatches.length && !fileAttachments.length) return;
     welcome.classList.add('hidden');
     chatInput.value = '';
     chatInput.style.height = 'auto';
@@ -1382,10 +1520,29 @@
       finalText = combined + (text ? '\n\n' + text : '');
     }
 
-    addMsg('user', finalText);
-    chatHistory.push({ role: 'user', content: finalText });
+    // Build content blocks: with file attachments use array format
+    let userContent;
+    if (fileAttachments.length) {
+      const blocks = [];
+      blocks.push({ type: 'text', text: finalText || 'Analyze the attached file(s)' });
+      for (const f of fileAttachments) {
+        if (f.type.startsWith('image/')) {
+          blocks.push({ type: 'image', source: { type: 'base64', media_type: f.type, data: f.data } });
+        } else {
+          blocks.push({ type: 'document', source: { type: 'base64', media_type: f.type, data: f.data } });
+        }
+      }
+      userContent = blocks;
+    } else {
+      userContent = finalText;
+    }
+
+    addMsg('user', userContent);
+    chatHistory.push({ role: 'user', content: userContent });
     pasteBatches = [];
+    fileAttachments = [];
     renderPasteBatches();
+    renderFileBatches();
 
     const useSearch = webSearchToggle.checked;
     const endpoint = useSearch ? '/api/chat-with-search' : '/api/chat';
@@ -1416,7 +1573,11 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
+      if (!res.ok) {
+        let errMsg = 'HTTP ' + res.status;
+        try { const e = await res.json(); if (e.error) errMsg = e.error; } catch {}
+        throw new Error(errMsg);
+      }
 
       if (payload.streaming) {
         const reader = res.body.getReader();
@@ -1495,8 +1656,112 @@
     });
   }
 
+  // ── File Attachment Management ──
+  const MAX_FILE_SIZE = 20 * 1024 * 1024;
+  const ALLOWED_TYPES = ['image/png','image/jpeg','image/gif','image/webp','application/pdf','text/plain','text/csv','application/json','text/html','text/markdown'];
+
+  function handleFiles(files) {
+    for (const file of files) {
+      if (file.size > MAX_FILE_SIZE) {
+        alert(`File "${file.name}" exceeds 20MB limit and was skipped.`);
+        continue;
+      }
+      if (!ALLOWED_TYPES.includes(file.type) && !file.type.startsWith('image/')) {
+        if (!file.type.startsWith('text/')) {
+          alert(`File type "${file.type}" for "${file.name}" is not supported.`);
+          continue;
+        }
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64 = e.target.result.split(',')[1];
+        fileAttachments.push({
+          id: 'file_' + Math.random().toString(36).slice(2, 8),
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          data: base64
+        });
+        renderFileBatches();
+        chatInput.focus();
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  function getFileIcon(type) {
+    if (type.startsWith('image/')) return '🖼';
+    if (type === 'application/pdf') return '📄';
+    if (type.startsWith('text/')) return '📝';
+    return '📎';
+  }
+
+  function renderFileBatches() {
+    if (!fileAttachments.length) { fileBatches.innerHTML = ''; return; }
+    fileBatches.innerHTML = fileAttachments.map(f => {
+      const isImage = f.type.startsWith('image/');
+      const thumb = isImage
+        ? `<img class="file-chip-thumb" src="data:${f.type};base64,${f.data}" alt="">`
+        : `<span class="file-chip-icon">${getFileIcon(f.type)}</span>`;
+      return '<div class="file-chip">' +
+        thumb +
+        '<div class="file-chip-info">' +
+        '<span class="file-chip-name">' + esc(f.name) + '</span>' +
+        '<span class="file-chip-size">' + formatSize(f.size) + '</span>' +
+        '</div>' +
+        '<button class="paste-batch-remove" data-id="' + f.id + '" type="button">&times;</button>' +
+        '</div>';
+    }).join('');
+    fileBatches.querySelectorAll('.paste-batch-remove').forEach(btn => {
+      btn.addEventListener('click', () => removeFileAttachment(btn.dataset.id));
+    });
+  }
+
+  function removeFileAttachment(id) {
+    fileAttachments = fileAttachments.filter(f => f.id !== id);
+    renderFileBatches();
+    chatInput.focus();
+  }
+
+  attachBtn.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) handleFiles(fileInput.files);
+    fileInput.value = '';
+  });
+
+  let dragCounter = 0;
+  inputArea.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter++;
+    inputArea.classList.add('dragover');
+  });
+  inputArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  });
+  inputArea.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter--;
+    if (dragCounter <= 0) { dragCounter = 0; inputArea.classList.remove('dragover'); }
+  });
+  inputArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter = 0;
+    inputArea.classList.remove('dragover');
+    if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+  });
+
   // ── Interactive Timeline Render Mechanics ──
-  function addMsg(role, text, waiting = false) {
+  function addMsg(role, content, waiting = false) {
     const id = 'msg_' + Math.random().toString(36).slice(2, 10);
     const wrap = document.createElement('div');
     wrap.className = 'msg-wrap ' + role;
@@ -1511,12 +1776,31 @@
 
     if (waiting) {
       bubble.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
-    } else if (text !== null) {
-      // Clean Paste Integration (Batch detector logic for bulky multiline pastes)
-      if (role === 'user' && (text.length > 220 || text.split('\n').length > 4)) {
-        bubble.appendChild(createPastedBatchElement(text));
+    } else if (content !== null) {
+      if (role === 'user' && Array.isArray(content)) {
+        for (const block of content) {
+          if (block.type === 'text' && block.text) {
+            const span = document.createElement('span');
+            span.innerHTML = renderText(block.text);
+            bubble.appendChild(span);
+          } else if (block.type === 'image' && block.source) {
+            const img = document.createElement('img');
+            img.src = `data:${block.source.media_type};base64,${block.source.data}`;
+            img.className = 'attached-image';
+            img.alt = 'Attached image';
+            bubble.appendChild(img);
+          } else if (block.type === 'document' && block.source) {
+            const chip = document.createElement('div');
+            chip.className = 'attached-file-chip';
+            const ext = block.source.media_type.split('/').pop().toUpperCase();
+            chip.innerHTML = `<span>📄 ${ext}</span>`;
+            bubble.appendChild(chip);
+          }
+        }
+      } else if (role === 'user' && typeof content === 'string' && (content.length > 220 || content.split('\n').length > 4)) {
+        bubble.appendChild(createPastedBatchElement(content));
       } else {
-        bubble.innerHTML = renderText(text);
+        bubble.innerHTML = renderText(content);
       }
     }
 

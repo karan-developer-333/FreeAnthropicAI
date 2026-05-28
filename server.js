@@ -28,7 +28,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json());
+app.use(express.json({ limit: '100mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 function getApiKey(req) {
@@ -158,7 +158,12 @@ app.post('/api/chat-with-search', async (req, res) => {
     const lastUser = [...messages].reverse().find(m => m.role === 'user');
     if (!lastUser) return res.status(400).json({ error: 'No user message', content: [{ type: 'text', text: '' }] });
 
-    const query = lastUser.content;
+    let query = '';
+    if (typeof lastUser.content === 'string') {
+      query = lastUser.content;
+    } else if (Array.isArray(lastUser.content)) {
+      query = lastUser.content.filter(c => c.type === 'text').map(c => c.text).filter(Boolean).join('\n');
+    }
     const baseUrl = process.env.VERCEL ? PROD_URL : `http://localhost:${PORT}`;
 
     // ── LangChain ChatOpenAI pointing to our own OpenAI endpoint ──

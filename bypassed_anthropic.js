@@ -160,7 +160,6 @@ export class BypassedClaudeClient {
       throw new Error('API key missing: cannot create request without a valid FREEMODEL_API_KEY or freemodelapi value.');
     }
 
-    console.log("REQUEST BODY TO UPSTREAM:", JSON.stringify(requestBody, null, 2));
     const bodyStr = JSON.stringify(requestBody);
 
     const headers = {
@@ -210,7 +209,6 @@ export class BypassedClaudeClient {
           return;
         }
 
-        console.log("UPSTREAM RESPONSE HEADERS:", res.headers);
         let stream = res;
         const encoding = res.headers['content-encoding'];
         if (encoding === 'br') {
@@ -232,7 +230,6 @@ export class BypassedClaudeClient {
         });
 
         stream.on('end', () => {
-          console.log("RAW UPSTREAM RESPONSE:\n", accumulatedData);
           if (!clientStream) {
             try {
               const cleaned = accumulatedData.trim();
