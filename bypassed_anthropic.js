@@ -379,7 +379,28 @@ export class BypassedClaudeClient {
       openaiMessages.push({ role: 'system', content: typeof clientSystem === 'string' ? clientSystem : JSON.stringify(clientSystem) });
     }
     for (const m of messages) {
-      openaiMessages.push({ role: m.role || 'user', content: m.content || '' });
+      const role = m.role || 'user';
+      let content = m.content;
+      if (Array.isArray(content)) {
+        const converted = [];
+        for (const block of content) {
+          if (block.type === 'text') {
+            converted.push({ type: 'text', text: block.text || '' });
+          } else if (block.type === 'image' && block.source?.type === 'base64') {
+            converted.push({
+              type: 'image_url',
+              image_url: { url: `data:${block.source.media_type};base64,${block.source.data}` }
+            });
+          } else if (block.type === 'document' && block.source?.type === 'base64') {
+            converted.push({
+              type: 'text',
+              text: `[Attached file: ${block.source.media_type}, size: ${(block.source.data.length * 0.75).toFixed(0)} bytes]`
+            });
+          }
+        }
+        content = converted.length ? converted : (typeof m.content === 'string' ? m.content : '');
+      }
+      openaiMessages.push({ role, content });
     }
 
     const requestBody = {
