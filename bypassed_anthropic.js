@@ -179,7 +179,6 @@ export class BypassedClaudeClient {
       'anthropic-dangerous-direct-browser-access': 'true',
       'anthropic-version': '2023-06-01',
       'x-app': 'cli',
-      'accept-encoding': 'gzip, deflate, br',
       'content-length': Buffer.byteLength(bodyStr)
     };
 
@@ -210,6 +209,7 @@ export class BypassedClaudeClient {
           return;
         }
 
+        console.log("UPSTREAM RESPONSE HEADERS:", res.headers);
         let stream = res;
         const encoding = res.headers['content-encoding'];
         if (encoding === 'br') {
@@ -231,6 +231,7 @@ export class BypassedClaudeClient {
         });
 
         stream.on('end', () => {
+          console.log("RAW UPSTREAM RESPONSE:\n", accumulatedData);
           if (!clientStream) {
             try {
               const cleaned = accumulatedData.trim();
