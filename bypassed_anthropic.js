@@ -129,7 +129,7 @@ export class BypassedClaudeClient {
     const lowerModel = resolvedModel.toLowerCase();
 
     if (isFreemodelApi) {
-      return this._createFreemodel({ messages, clientSystem, resolvedModel, lowerModel, max_tokens, temperature, clientStream, onToken });
+      return this._createFreemodel({ messages, clientSystem, resolvedModel, lowerModel, max_tokens, temperature, clientStream, onToken, tools });
     }
 
     if (lowerModel === 'opus') resolvedModel = 'claude-opus-4-7';
@@ -364,7 +364,7 @@ export class BypassedClaudeClient {
     });
   }
 
-  async _createFreemodel({ messages, clientSystem, resolvedModel, lowerModel, max_tokens, temperature, clientStream, onToken }) {
+  async _createFreemodel({ messages, clientSystem, resolvedModel, lowerModel, max_tokens, temperature, clientStream, onToken, tools }) {
     const aliasMap = {
       opus: 'gpt-5.5',
       sonnet: 'gpt-5.4',
@@ -410,6 +410,16 @@ export class BypassedClaudeClient {
     };
     if (max_tokens) requestBody.max_tokens = max_tokens;
     if (temperature !== undefined) requestBody.temperature = temperature;
+    if (tools && tools.length) {
+      requestBody.tools = tools.map(t => ({
+        type: "function",
+        function: {
+          name: t.name,
+          description: t.description || "",
+          parameters: t.input_schema || { type: "object", properties: {} }
+        }
+      }));
+    }
 
     if (!this.apiKey) {
       throw new Error('API key missing');
@@ -469,6 +479,7 @@ export class BypassedClaudeClient {
 
         stream.on('end', () => {
           let content = '';
+          let toolCalls = [];
           let finishReason = 'stop';
           let inputTokens = 0;
           let outputTokens = 0;
@@ -476,7 +487,9 @@ export class BypassedClaudeClient {
           try {
             const parsed = JSON.parse(accumulatedData.trim());
             if (parsed.choices && parsed.choices.length > 0) {
-              content = parsed.choices[0].message?.content || '';
+              const msg = parsed.choices[0].message;
+              content = msg?.content || '';
+              toolCalls = msg?.tool_calls || [];
               finishReason = parsed.choices[0].finish_reason || 'stop';
             }
             if (parsed.usage) {
@@ -501,13 +514,32 @@ export class BypassedClaudeClient {
             }
           }
 
+          const responseContent = [];
+          if (content) {
+            responseContent.push({ type: "text", text: content });
+          }
+          if (toolCalls && toolCalls.length) {
+            toolCalls.forEach(tc => {
+              let parsedInput = {};
+              try {
+                parsedInput = typeof tc.function.arguments === 'string' ? JSON.parse(tc.function.arguments) : tc.function.arguments;
+              } catch (_) {}
+              responseContent.push({
+                type: "tool_use",
+                id: tc.id || 'toolu_' + crypto.randomBytes(8).toString('hex'),
+                name: tc.function.name,
+                input: parsedInput
+              });
+            });
+          }
+
           const anthropicResponse = {
             id: 'msg_' + crypto.randomBytes(12).toString('hex'),
             type: "message",
             role: "assistant",
-            content: [{ type: "text", text: content }],
+            content: responseContent,
             model: gptModel,
-            stop_reason: finishReason === 'stop' ? 'end_turn' : finishReason,
+            stop_reason: toolCalls.length ? 'tool_use' : (finishReason === 'stop' ? 'end_turn' : finishReason),
             stop_sequence: null,
             usage: {
               input_tokens: inputTokens,
